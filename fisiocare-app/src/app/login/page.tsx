@@ -148,7 +148,7 @@ export default function Login() {
           </p>
 
           <div className="mt-6 text-center">
-            <Link href="/login_medico" className="text-sm text-teal-600 hover:underline">
+            <Link href="/login-medico" className="text-sm text-teal-600 hover:underline">
               Área do Médico
             </Link>
           </div>

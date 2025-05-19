@@ -142,7 +142,7 @@ export default function LoginMedico() {
 
           <p className="mt-8 text-base text-center text-teal-700 transition duration-300 cursor-pointer hover:underline hover:opacity-80">
             Não tem uma conta?{" "}
-            <Link href="/register_medico" className="font-medium">
+            <Link href="/register-medico" className="font-medium">
               Cadastre-se
             </Link>
           </p>
