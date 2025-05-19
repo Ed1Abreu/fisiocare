@@ -13,6 +13,7 @@ class EspecialidadeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CadastroClienteSerializer(serializers.ModelSerializer):
+    usuario = serializers.CharField(write_only=True)  # receber username
     senha = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     senha2 = serializers.CharField(write_only=True, required=True)
 
@@ -20,20 +21,24 @@ class CadastroClienteSerializer(serializers.ModelSerializer):
         model = PerfilCliente
         fields = ['usuario', 'nome_completo', 'email', 'cpf', 'rg', 'telefone', 'endereco', 'data_nascimento', 'senha', 'senha2']
 
-    def validate(self, attrs):
-        if attrs['senha'] != attrs['senha2']:
+    def validate(self, data):
+        if data['senha'] != data['senha2']:
             raise serializers.ValidationError({"senha": "As senhas não coincidem."})
-        return attrs
+        return data
 
     def create(self, validated_data):
+        usuario_username = validated_data.pop('usuario')
         senha = validated_data.pop('senha')
         validated_data.pop('senha2')
-        usuario = validated_data.pop('usuario')
-        user = Usuario.objects.create_user(username=usuario.username, password=senha)
+
+        # Criar o usuário
+        user = Usuario.objects.create_user(username=usuario_username, password=senha)
         user.is_cliente = True
         user.save()
-        cliente = PerfilCliente.objects.create(usuario=user, **validated_data)
-        return cliente
+
+        # Criar perfil cliente vinculado ao usuário
+        perfil = PerfilCliente.objects.create(usuario=user, **validated_data)
+        return perfil
 
 class CadastroMedicoSerializer(serializers.ModelSerializer):
     senha = serializers.CharField(write_only=True, required=True, validators=[validate_password])

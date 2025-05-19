@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'usuarios',
 ]
 
+AUTH_USER_MODEL = 'usuarios.Usuario'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -75,7 +77,7 @@ REST_FRAMEWORK = {
     )
 }
 
-AUTH_USER_MODEL = 'usuarios.Usuario'
+
 
 WSGI_APPLICATION = 'fisiocare.wsgi.application'
 

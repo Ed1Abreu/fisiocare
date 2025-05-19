@@ -2,8 +2,9 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class Usuario(AbstractUser):
-    is_medico = models.BooleanField(default=False)
     is_cliente = models.BooleanField(default=False)
+    is_medico = models.BooleanField(default=False)
+    # Username, email, password já estão incluídos
 
 class Especialidade(models.Model):
     nome = models.CharField(max_length=100)
@@ -12,17 +13,20 @@ class Especialidade(models.Model):
         return self.nome
 
 class PerfilCliente(models.Model):
-    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE)
+    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='perfil_cliente')
     nome_completo = models.CharField(max_length=255)
     email = models.EmailField()
     cpf = models.CharField(max_length=14, unique=True)
-    rg = models.CharField(max_length=20, unique=True)
+    rg = models.CharField(max_length=20)
     telefone = models.CharField(max_length=20)
-    endereco = models.TextField()
+    endereco = models.CharField(max_length=255)
     data_nascimento = models.DateField()
 
+    def __str__(self):
+        return self.nome_completo
+
 class PerfilMedico(models.Model):
-    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE)
+    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='perfil_medico')
     nome_completo = models.CharField(max_length=255)
     email_profissional = models.EmailField()
     cpf = models.CharField(max_length=14, unique=True)
@@ -31,19 +35,6 @@ class PerfilMedico(models.Model):
     telefone = models.CharField(max_length=20)
     endereco_consultorio = models.TextField()
     data_nascimento = models.DateField()
-    
-      # def total_pacientes(self):
-    #     return PerfilCliente.objects.filter(consulta__medico=self).distinct().count()
 
-    # def consultas_hoje(self):
-    #     from datetime import date
-    #     return self.consulta_set.filter(data=date.today()).count()
-
-    # def taxa_ocupacao(self):
-    #     from datetime import date
-    #     total_slots = 10
-    #     return (self.consultas_hoje() / total_slots) * 100
-    
     def __str__(self):
         return f'{self.nome_completo} - {self.especialidade}'
-
