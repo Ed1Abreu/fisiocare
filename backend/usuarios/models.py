@@ -7,11 +7,11 @@ class Usuario(AbstractUser):
     # Username, email, password já estão incluídos
 
 class Especialidade(models.Model):
-    nome = models.CharField(max_length=100)
-
+    nome = models.CharField(max_length=100, unique=True)
     def __str__(self):
         return self.nome
-
+    
+    
 class PerfilCliente(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, related_name='perfil_cliente')
     nome_completo = models.CharField(max_length=255)

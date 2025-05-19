@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Usuario, PerfilCliente, PerfilMedico, Especialidade
 from django.contrib.auth.password_validation import validate_password
+from datetime import date
 
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,14 +13,27 @@ class EspecialidadeSerializer(serializers.ModelSerializer):
         model = Especialidade
         fields = '__all__'
 
+# ----------------------------
+# Cadastro Cliente
+# ----------------------------
 class CadastroClienteSerializer(serializers.ModelSerializer):
-    usuario = serializers.CharField(write_only=True)  # receber username
+    usuario = serializers.CharField(write_only=True)
     senha = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     senha2 = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = PerfilCliente
         fields = ['usuario', 'nome_completo', 'email', 'cpf', 'rg', 'telefone', 'endereco', 'data_nascimento', 'senha', 'senha2']
+
+    def validate_usuario(self, value):
+        if Usuario.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Este nome de usuário já está em uso.")
+        return value
+
+    def validate_data_nascimento(self, value):
+        if value > date.today():
+            raise serializers.ValidationError("A data de nascimento não pode ser no futuro.")
+        return value
 
     def validate(self, data):
         if data['senha'] != data['senha2']:
@@ -31,16 +45,19 @@ class CadastroClienteSerializer(serializers.ModelSerializer):
         senha = validated_data.pop('senha')
         validated_data.pop('senha2')
 
-        # Criar o usuário
         user = Usuario.objects.create_user(username=usuario_username, password=senha)
         user.is_cliente = True
         user.save()
 
-        # Criar perfil cliente vinculado ao usuário
         perfil = PerfilCliente.objects.create(usuario=user, **validated_data)
         return perfil
 
+# ----------------------------
+# Cadastro Médico
+# ----------------------------
 class CadastroMedicoSerializer(serializers.ModelSerializer):
+    usuario = serializers.CharField(write_only=True)
+    especialidade = serializers.PrimaryKeyRelatedField(queryset=Especialidade.objects.all())
     senha = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     senha2 = serializers.CharField(write_only=True, required=True)
 
@@ -48,17 +65,29 @@ class CadastroMedicoSerializer(serializers.ModelSerializer):
         model = PerfilMedico
         fields = ['usuario', 'nome_completo', 'email_profissional', 'cpf', 'crefito', 'especialidade', 'telefone', 'endereco_consultorio', 'data_nascimento', 'senha', 'senha2']
 
+    def validate_usuario(self, value):
+        if Usuario.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Este nome de usuário já está em uso.")
+        return value
+
+    def validate_data_nascimento(self, value):
+        if value > date.today():
+            raise serializers.ValidationError("A data de nascimento não pode ser no futuro.")
+        return value
+
     def validate(self, attrs):
         if attrs['senha'] != attrs['senha2']:
             raise serializers.ValidationError({"senha": "As senhas não coincidem."})
         return attrs
 
     def create(self, validated_data):
+        usuario_username = validated_data.pop('usuario')
         senha = validated_data.pop('senha')
         validated_data.pop('senha2')
-        usuario = validated_data.pop('usuario')
-        user = Usuario.objects.create_user(username=usuario.username, password=senha)
+
+        user = Usuario.objects.create_user(username=usuario_username, password=senha)
         user.is_medico = True
         user.save()
+
         medico = PerfilMedico.objects.create(usuario=user, **validated_data)
         return medico
