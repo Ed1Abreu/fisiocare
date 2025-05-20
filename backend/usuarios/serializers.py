@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import Usuario, PerfilCliente, PerfilMedico, Especialidade
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
 from datetime import date
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -91,3 +93,57 @@ class CadastroMedicoSerializer(serializers.ModelSerializer):
 
         medico = PerfilMedico.objects.create(usuario=user, **validated_data)
         return medico
+
+# ----------------------------
+# Login Paciente
+# ----------------------------
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    senha = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        senha = attrs.get('senha')
+
+        user = authenticate(username=username, password=senha)
+        if not user:
+            raise serializers.ValidationError("Credenciais inválidas.")
+
+        if not user.is_cliente:
+            raise serializers.ValidationError("Este login é exclusivo para clientes.")
+
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'usuario_id': user.id,
+            'username': user.username
+        }
+
+# ----------------------------
+# Login Médico
+# ----------------------------    
+class MedicoLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    senha = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        username = attrs.get('username')
+        senha = attrs.get('senha')
+
+        user = authenticate(username=username, password=senha)
+        if not user:
+            raise serializers.ValidationError("Credenciais inválidas.")
+
+        if not user.is_medico:
+            raise serializers.ValidationError("Este login é exclusivo para médicos.")
+
+        refresh = RefreshToken.for_user(user)
+
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'usuario_id': user.id,
+            'username': user.username
+        }

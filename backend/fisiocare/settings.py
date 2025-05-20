@@ -54,6 +54,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+SIMPLE_JWT = {
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ROTATE_REFRESH_TOKENS': True,
+}
+INSTALLED_APPS += ['rest_framework_simplejwt.token_blacklist']
+
+
 ROOT_URLCONF = 'fisiocare.urls'
 
 TEMPLATES = [
